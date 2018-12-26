@@ -5,8 +5,8 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import ugettext_lazy as _
 
-from wagtail.wagtailcore.models import Page, Site
-from wagtail.wagtailimages.edit_handlers import ImageChooserPanel
+from wagtail.core.models import Page, Site
+from wagtail.images.edit_handlers import ImageChooserPanel
 
 from meta import settings as meta_settings
 from meta_mixin.models import ModelMeta
@@ -38,8 +38,9 @@ class MetadataMixin(ModelMeta):
         'twitter_author': 'get_author_twitter',
         'twitter_site': meta_settings.TWITTER_SITE,
 
-        'gplus_author': 'get_author_gplus',
-        'gplus_publisher': meta_settings.GPLUS_PUBLISHER,
+        # gplus closing in 2019
+        # 'gplus_author': 'get_author_gplus',
+        # 'gplus_publisher': meta_settings.GPLUS_PUBLISHER,
 
         'og_author': 'get_author_url',
         'og_publisher': meta_settings.FB_PUBLISHER,
@@ -132,7 +133,8 @@ class MetadataMixin(ModelMeta):
 
         site = self.get_site()
         if site is not None:
-            return '%s%s' % (site.root_url, url if url.startswith('/') else '/' + url)
+            return ('%s%s' %
+                    (site.root_url, url if url.startswith('/') else '/' + url))
 
         raise NotImplementedError
 
@@ -161,8 +163,12 @@ class MetadataPageMixin(MetadataMixin, models.Model):
 
     def get_meta_image(self):
         if self.search_image is not None:
+            if hasattr(settings, 'META_SEARCH_IMAGE_RENDITION'):
+                rend_settings = settings.META_SEARCH_IMAGE_RENDITION
+            else:
+                rend_settings = 'fill-800x450'
             return self.build_absolute_uri(
-                self.search_image.get_rendition('fill-800x450').url)
+                self.search_image.get_rendition(rend_settings).url)
         return super(MetadataPageMixin, self).get_meta_image()
 
     class Meta:
